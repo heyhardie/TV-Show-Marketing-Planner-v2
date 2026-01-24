@@ -22,18 +22,19 @@ export default {
       });
     };
 
-    // Attempt to serve the static asset
+    // 1. Fetch the requested asset
     let response = await env.ASSETS.fetch(request);
     
-    // If it's the index.html (root), inject the key
-    if (url.pathname === '/' || url.pathname === '/index.html') {
-      return injectKey(response);
+    // 2. Handle SPA Routing: If 404 and not a file extension, serve index.html
+    if (response.status === 404 && !url.pathname.includes('.')) {
+      response = await env.ASSETS.fetch(new Request(`${url.origin}/index.html`, request));
     }
 
-    // Handle SPA Routing (404s -> index.html)
-    if (response.status === 404 && !url.pathname.includes('.')) {
-      const indexResponse = await env.ASSETS.fetch(new Request(`${url.origin}/index.html`, request));
-      return injectKey(indexResponse);
+    // 3. Check if the response is HTML. If so, inject the key.
+    // This is safer than checking URL paths as it covers root, subpaths, and index.html explicitly.
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      return injectKey(response);
     }
     
     return response;

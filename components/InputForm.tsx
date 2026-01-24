@@ -25,23 +25,26 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   let statusMessage = "Unknown Status";
   let statusColor = "text-gray-400 border-gray-700";
   let isReady = false;
+  let tip = "";
 
   if (hasBuildKey) {
-      statusMessage = "Build-time Key Active";
+      statusMessage = "Local Dev: Loaded from .env";
       statusColor = "text-green-400 border-green-800 bg-green-900/30";
       isReady = true;
   } else if (runtimeKey === '__CLOUDFLARE_RUNTIME_API_KEY__') {
-      statusMessage = "Worker Not Active (Using Placeholder)";
+      statusMessage = "Key Injection Failed";
       statusColor = "text-red-400 border-red-800 bg-red-900/30";
+      tip = "If running locally: Create a .env file with API_KEY=... and restart. If deployed: Ensure the Worker is active and intercepting HTML requests.";
   } else if (runtimeKey === '') {
-      statusMessage = "Worker Active, but Secret is Empty";
+      statusMessage = "Worker Active, Key Empty";
       statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
+      tip = "The Worker is running, but env.API_KEY is missing. Add it via 'wrangler secret put API_KEY' or Cloudflare Dashboard.";
   } else if (runtimeKey) {
-      statusMessage = "Cloudflare Secret Active";
+      statusMessage = "Cloudflare Production Ready";
       statusColor = "text-green-400 border-green-800 bg-green-900/30";
       isReady = true;
   } else {
-      statusMessage = "No Configuration Found";
+      statusMessage = "Configuration Error";
       statusColor = "text-red-400 border-red-800 bg-red-900/30";
   }
 
@@ -167,10 +170,9 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
               <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></div>
               <span>{statusMessage}</span>
           </div>
-          {!isReady && (
+          {!isReady && tip && (
               <p className="text-xs text-gray-500 text-center max-w-md">
-                 Ensure API_KEY is set in Cloudflare Settings and you have deployed via 'wrangler deploy'. 
-                 If using Git integration, ensure the Worker is configured.
+                 {tip}
               </p>
           )}
       </div>

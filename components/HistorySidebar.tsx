@@ -20,19 +20,21 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onClear,
 }) => {
   return (
-    <div
-      className={`fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}
-    >
+    <div className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Backdrop */}
       <div 
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`} 
         onClick={onClose}
       />
 
       {/* Sidebar Panel */}
-      <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-gray-900 border-l border-gray-800 shadow-2xl flex flex-col">
+      <div 
+        className={`absolute right-0 top-0 h-full w-full max-w-sm bg-gray-900 border-l border-gray-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white">History</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">

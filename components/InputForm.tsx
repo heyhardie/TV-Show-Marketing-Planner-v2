@@ -18,6 +18,13 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
     onSubmit(input, model, mode);
   };
 
+  // Check for Runtime Key OR Build Key
+  const runtimeKey = (window as any).RUNTIME_CONFIG?.API_KEY;
+  const hasRuntimeKey = runtimeKey && runtimeKey !== '__CLOUDFLARE_RUNTIME_API_KEY__';
+  const hasBuildKey = !!process.env.API_KEY;
+  
+  const isConfigured = hasRuntimeKey || hasBuildKey;
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto space-y-6 bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
       
@@ -133,6 +140,18 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
           </>
         )}
       </button>
+
+      {/* API Key Status Indicator */}
+      <div className="flex justify-center items-center pt-2">
+          <div className={`px-3 py-1 rounded-full text-xs font-mono flex items-center space-x-2 ${
+              isConfigured ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-yellow-900/30 text-yellow-400 border border-yellow-800'
+          }`}>
+              <div className={`w-2 h-2 rounded-full ${isConfigured ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
+              <span>
+                  {isConfigured ? 'System API Key Configured' : 'Using Manual Key Selection'}
+              </span>
+          </div>
+      </div>
     </form>
   );
 };

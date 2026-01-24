@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       // Injects the API_KEY from the system environment (Cloudflare) into the client code
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY),
+      // Default to empty string to prevent "undefined" replacement which causes runtime crashes
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY || ""),
     },
   };
 });

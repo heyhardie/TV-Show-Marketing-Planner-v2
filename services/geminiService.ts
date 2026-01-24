@@ -1,11 +1,35 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { MarketingReport, ModelType, InputMode } from '../types';
 
-// Initialize the client. API Key is injected via process.env.API_KEY
-// We use a getter to ensure we pick up any potentially updated keys if the app reloads context,
-// though normally we instantiate once. For this app, we might need to instantiate before calls
-// to ensure we capture the selected key if handled by the environment wrapper.
-const getAiClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to retrieve the API Key from various possible sources
+const getApiKey = (): string | undefined => {
+  // 1. Check for Runtime Injection (Cloudflare Worker Strategy)
+  // We check if the value exists AND is not the placeholder string
+  const runtimeKey = (window as any).RUNTIME_CONFIG?.API_KEY;
+  if (runtimeKey && runtimeKey !== '__CLOUDFLARE_RUNTIME_API_KEY__') {
+    console.debug("GeminiService: Using Runtime API Key");
+    return runtimeKey;
+  }
+
+  // 2. Check for Build-Time Injection (Local Dev / Vite .env)
+  if (process.env.API_KEY) {
+    console.debug("GeminiService: Using Build-time API Key");
+    return process.env.API_KEY;
+  }
+
+  console.debug("GeminiService: No API Key found in env or runtime config");
+  return undefined;
+};
+
+// Initialize the client. 
+const getAiClient = (keyOverride?: string) => {
+  const apiKey = keyOverride || getApiKey();
+  
+  if (!apiKey) {
+     throw new Error("API_KEY_MISSING");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 const RESPONSE_SCHEMA: Schema = {
   type: Type.OBJECT,
@@ -92,6 +116,21 @@ const RESPONSE_SCHEMA: Schema = {
   required: ["showInfo", "audienceProfile", "competitorAnalysis", "marketingPlan", "keyArtConcepts"],
 };
 
+// Helper to handle API Key selection flow
+const ensureApiKey = async () => {
+  // If we have a key from env or runtime, we are good.
+  if (getApiKey()) return;
+
+  // If not, and we are in an environment that supports dynamic selection:
+  if ((window as any).aistudio && (window as any).aistudio.openSelectKey) {
+     const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+     if (!hasKey) {
+       await (window as any).aistudio.openSelectKey();
+     }
+     return;
+  }
+};
+
 export const generateMarketingStrategy = async (
   input: string,
   modelType: ModelType,
@@ -108,7 +147,22 @@ export const generateMarketingStrategy = async (
     }
   }
 
-  const ai = getAiClient();
+  // Attempt to resolve key issues if missing
+  try {
+     getAiClient(); 
+  } catch (e: any) {
+    if (e.message === 'API_KEY_MISSING') {
+      await ensureApiKey();
+    }
+  }
+
+  // Explicit check before proceeding
+  let ai;
+  try {
+      ai = getAiClient();
+  } catch(e) {
+      throw new Error("API Key is missing. Please provide it via settings or select a project.");
+  }
   
   let modelName = 'gemini-3-flash-preview';
   if (modelType === 'pro' || modelType === 'thinking') {
@@ -175,11 +229,11 @@ export const generateMarketingStrategy = async (
     return data;
 
   } catch (error: any) {
-    if (error.message && error.message.includes("API_KEY_RESET_REQUIRED")) {
+    if (error.message && (error.message.includes("API_KEY") || error.message.includes("403"))) {
        if ((window as any).aistudio && (window as any).aistudio.openSelectKey) {
          await (window as any).aistudio.openSelectKey();
-         // Retry once recursively
-         return generateMarketingStrategy(input, modelType, mode);
+         // Retry once recursivly or throw specific error asking user to try again
+         throw new Error("API Key updated. Please try generating again.");
        }
     }
     throw error;
@@ -195,7 +249,17 @@ export const generateKeyArtImage = async (prompt: string): Promise<string> => {
       }
   }
 
-  const ai = getAiClient();
+  // Check key existence
+  try { getAiClient(); } 
+  catch(e: any) { if (e.message === 'API_KEY_MISSING') await ensureApiKey(); }
+
+  let ai;
+  try {
+      ai = getAiClient();
+  } catch(e) {
+      throw new Error("API Key is missing.");
+  }
+
   const modelName = 'gemini-3-pro-image-preview';
 
   const response = await ai.models.generateContent({

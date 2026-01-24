@@ -17,7 +17,7 @@ const getApiKey = (): string | undefined => {
     return process.env.API_KEY;
   }
 
-  console.debug("GeminiService: No API Key found in env or runtime config");
+  console.warn("GeminiService: No API Key found. Runtime config:", (window as any).RUNTIME_CONFIG);
   return undefined;
 };
 

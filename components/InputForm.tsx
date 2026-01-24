@@ -18,12 +18,32 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
     onSubmit(input, model, mode);
   };
 
-  // Check for Runtime Key OR Build Key
+  // DIAGNOSTIC LOGIC
   const runtimeKey = (window as any).RUNTIME_CONFIG?.API_KEY;
-  const hasRuntimeKey = runtimeKey && runtimeKey !== '__CLOUDFLARE_RUNTIME_API_KEY__';
   const hasBuildKey = !!process.env.API_KEY;
   
-  const isConfigured = hasRuntimeKey || hasBuildKey;
+  let statusMessage = "Unknown Status";
+  let statusColor = "text-gray-400 border-gray-700";
+  let isReady = false;
+
+  if (hasBuildKey) {
+      statusMessage = "Build-time Key Active";
+      statusColor = "text-green-400 border-green-800 bg-green-900/30";
+      isReady = true;
+  } else if (runtimeKey === '__CLOUDFLARE_RUNTIME_API_KEY__') {
+      statusMessage = "Worker Not Active (Using Placeholder)";
+      statusColor = "text-red-400 border-red-800 bg-red-900/30";
+  } else if (runtimeKey === '') {
+      statusMessage = "Worker Active, but Secret is Empty";
+      statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
+  } else if (runtimeKey) {
+      statusMessage = "Cloudflare Secret Active";
+      statusColor = "text-green-400 border-green-800 bg-green-900/30";
+      isReady = true;
+  } else {
+      statusMessage = "No Configuration Found";
+      statusColor = "text-red-400 border-red-800 bg-red-900/30";
+  }
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto space-y-6 bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
@@ -142,15 +162,17 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
       </button>
 
       {/* API Key Status Indicator */}
-      <div className="flex justify-center items-center pt-2">
-          <div className={`px-3 py-1 rounded-full text-xs font-mono flex items-center space-x-2 ${
-              isConfigured ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-yellow-900/30 text-yellow-400 border border-yellow-800'
-          }`}>
-              <div className={`w-2 h-2 rounded-full ${isConfigured ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
-              <span>
-                  {isConfigured ? 'System API Key Configured' : 'Using Manual Key Selection'}
-              </span>
+      <div className="flex flex-col items-center pt-2 gap-2">
+          <div className={`px-3 py-1 rounded-full text-xs font-mono flex items-center space-x-2 border ${statusColor}`}>
+              <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></div>
+              <span>{statusMessage}</span>
           </div>
+          {!isReady && (
+              <p className="text-xs text-gray-500 text-center max-w-md">
+                 Ensure API_KEY is set in Cloudflare Settings and you have deployed via 'wrangler deploy'. 
+                 If using Git integration, ensure the Worker is configured.
+              </p>
+          )}
       </div>
     </form>
   );

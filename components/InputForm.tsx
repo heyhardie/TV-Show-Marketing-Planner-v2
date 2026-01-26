@@ -34,11 +34,11 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   } else if (runtimeKey === '__CLOUDFLARE_RUNTIME_API_KEY__') {
       statusMessage = "Key Injection Failed";
       statusColor = "text-red-400 border-red-800 bg-red-900/30";
-      tip = "If running locally: Create a .env file with API_KEY=... and restart. If deployed: Ensure the Worker is active and intercepting HTML requests.";
+      tip = "Running locally? Create a '.env' file with API_KEY=... and restart dev server. Deployed? The Worker isn't modifying the HTML (check caching).";
   } else if (runtimeKey === '') {
       statusMessage = "Worker Active, Key Empty";
       statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
-      tip = "The Worker is running, but env.API_KEY is missing. Add it via 'wrangler secret put API_KEY' or Cloudflare Dashboard.";
+      tip = "Worker is running but API_KEY secret is missing or empty. Set it in Cloudflare Dashboard > Settings > Variables.";
   } else if (runtimeKey) {
       statusMessage = "Cloudflare Production Ready";
       statusColor = "text-green-400 border-green-800 bg-green-900/30";

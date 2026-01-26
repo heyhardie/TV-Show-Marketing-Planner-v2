@@ -20,7 +20,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
 
   // DIAGNOSTIC LOGIC
   const runtimeKey = (window as any).RUNTIME_CONFIG?.API_KEY;
-  const hasBuildKey = !!process.env.API_KEY;
+  const hasBuildKey = !!process.env.API_KEY && process.env.API_KEY !== "";
   
   let statusMessage = "Unknown Status";
   let statusColor = "text-gray-400 border-gray-700";
@@ -28,24 +28,25 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   let tip = "";
 
   if (hasBuildKey) {
-      statusMessage = "Local Dev: Loaded from .env";
+      statusMessage = "Local Dev: Key Loaded (.env)";
       statusColor = "text-green-400 border-green-800 bg-green-900/30";
       isReady = true;
   } else if (runtimeKey === '__CLOUDFLARE_RUNTIME_API_KEY__') {
       statusMessage = "Key Injection Failed";
       statusColor = "text-red-400 border-red-800 bg-red-900/30";
-      tip = "Running locally? Create a '.env' file with API_KEY=... and restart dev server. Deployed? The Worker isn't modifying the HTML (check caching).";
+      tip = "If Local: Create '.env' with API_KEY=... and restart. 'npm run preview' will NOT work without .env. If Deployed: Worker is bypassed. Check routes.";
   } else if (runtimeKey === '') {
-      statusMessage = "Worker Active, Key Empty";
+      statusMessage = "Worker Active, Key Missing";
       statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
-      tip = "Worker is running but API_KEY secret is missing or empty. Set it in Cloudflare Dashboard > Settings > Variables.";
-  } else if (runtimeKey) {
-      statusMessage = "Cloudflare Production Ready";
+      tip = "Worker ran but found no API_KEY secret. Add 'API_KEY' in Cloudflare Dashboard > Settings > Variables.";
+  } else if (runtimeKey && runtimeKey.length > 10) {
+      statusMessage = "Production Ready (Cloudflare)";
       statusColor = "text-green-400 border-green-800 bg-green-900/30";
       isReady = true;
   } else {
-      statusMessage = "Configuration Error";
+      statusMessage = "Config Error";
       statusColor = "text-red-400 border-red-800 bg-red-900/30";
+      tip = "Unexpected state. Check console.";
   }
 
   return (
@@ -171,7 +172,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
               <span>{statusMessage}</span>
           </div>
           {!isReady && tip && (
-              <p className="text-xs text-gray-500 text-center max-w-md">
+              <p className="text-xs text-gray-500 text-center max-w-lg bg-gray-900/50 p-2 rounded">
                  {tip}
               </p>
           )}

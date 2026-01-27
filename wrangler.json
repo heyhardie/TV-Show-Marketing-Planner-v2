@@ -8,5 +8,11 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "routes": [
+    {
+      "pattern": "tv-marketer.hardie.org",
+      "custom_domain": true
+    }
+  ]
 }

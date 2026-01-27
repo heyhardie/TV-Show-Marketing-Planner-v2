@@ -19,34 +19,41 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   };
 
   // DIAGNOSTIC LOGIC
-  const runtimeKey = (window as any).RUNTIME_CONFIG?.API_KEY;
+  const runtimeConfig = (window as any).RUNTIME_CONFIG;
+  const runtimeKey = runtimeConfig?.API_KEY;
   const hasBuildKey = !!process.env.API_KEY && process.env.API_KEY !== "";
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
-  let statusMessage = "Unknown Status";
+  let statusMessage = "Checking Config...";
   let statusColor = "text-gray-400 border-gray-700";
   let isReady = false;
   let tip = "";
 
   if (hasBuildKey) {
-      statusMessage = "Local Dev: Key Loaded (.env)";
+      statusMessage = "Ready (Build Config)";
       statusColor = "text-green-400 border-green-800 bg-green-900/30";
       isReady = true;
+  } else if (runtimeKey && runtimeKey !== '__CLOUDFLARE_RUNTIME_API_KEY__' && runtimeKey !== '') {
+      statusMessage = "Ready (Worker Config)";
+      statusColor = "text-green-400 border-green-800 bg-green-900/30";
+      isReady = true;
+  } else if (isLocal) {
+      statusMessage = "Missing Local Config";
+      statusColor = "text-red-400 border-red-800 bg-red-900/30";
+      tip = "1. Create a .env file in your project root.\n2. Add: API_KEY=your_key_here\n3. Stop and restart: npm run dev";
   } else if (runtimeKey === '__CLOUDFLARE_RUNTIME_API_KEY__') {
       statusMessage = "Key Injection Failed";
       statusColor = "text-red-400 border-red-800 bg-red-900/30";
-      tip = "If Local: Create '.env' with API_KEY=... and restart. 'npm run preview' will NOT work without .env. If Deployed: Worker is bypassed. Check routes.";
+      tip = "The Worker is running, but failed to replace the key. This often happens if the HTML is cached. Try Hard Refresh (Ctrl+F5).";
   } else if (runtimeKey === '') {
-      statusMessage = "Worker Active, Key Missing";
+      statusMessage = "Worker Active, Key Empty";
       statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
-      tip = "Worker ran but found no API_KEY secret. Add 'API_KEY' in Cloudflare Dashboard > Settings > Variables.";
-  } else if (runtimeKey && runtimeKey.length > 10) {
-      statusMessage = "Production Ready (Cloudflare)";
-      statusColor = "text-green-400 border-green-800 bg-green-900/30";
-      isReady = true;
+      // THIS IS THE FIX FOR THE USER'S QUESTION
+      tip = "The Worker is running, but the API_KEY variable is empty.\n\nIMPORTANT: Go to Cloudflare Dashboard > [Your Project] > Settings > Variables and Secrets.\n(Do NOT use 'Build' variables). Add 'API_KEY' there and Redeploy.";
   } else {
-      statusMessage = "Config Error";
-      statusColor = "text-red-400 border-red-800 bg-red-900/30";
-      tip = "Unexpected state. Check console.";
+      statusMessage = "Worker Not Active";
+      statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
+      tip = "The Worker did not run. 1. Go to Cloudflare > Workers > [App] > Settings > Triggers. 2. Ensure a Route exists (e.g. *your-app.workers.dev/*).";
   }
 
   return (
@@ -172,9 +179,10 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
               <span>{statusMessage}</span>
           </div>
           {!isReady && tip && (
-              <p className="text-xs text-gray-500 text-center max-w-lg bg-gray-900/50 p-2 rounded">
+              <div className="text-xs text-gray-400 text-left max-w-lg bg-black/30 p-3 rounded border border-gray-700 whitespace-pre-line">
+                 <span className="font-bold text-gray-300 block mb-1">Troubleshooting:</span>
                  {tip}
-              </p>
+              </div>
           )}
       </div>
     </form>

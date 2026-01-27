@@ -23,9 +23,12 @@ export default {
     };
 
     // Determine if this looks like a request for an HTML page
+    // We check URL path AND Accept header to be safe
+    const acceptHeader = request.headers.get('Accept');
     const isHtmlRequest = url.pathname === '/' || 
                           url.pathname === '/index.html' || 
-                          (!url.pathname.includes('.') && !url.pathname.startsWith('/api'));
+                          (!url.pathname.includes('.') && !url.pathname.startsWith('/api')) ||
+                          (acceptHeader && acceptHeader.includes('text/html'));
 
     let requestToFetch = request;
 

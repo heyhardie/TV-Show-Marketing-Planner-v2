@@ -45,11 +45,38 @@ export default {
       const providedKey = url.searchParams.get('key');
       const validKey = env.API_KEY;
 
+      // AUTH LOGIN SCREEN
       if (!validKey || providedKey !== validKey) {
-        return new Response("Unauthorized. Access denied.", { status: 401 });
+        const loginHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Admin Login</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <style>body { background-color: #111827; color: #e5e7eb; }</style>
+          </head>
+          <body class="h-screen flex items-center justify-center p-4">
+            <div class="bg-gray-800 p-8 rounded-xl shadow-xl border border-gray-700 w-full max-w-md">
+              <h1 class="text-xl font-bold text-white mb-6 text-center">Admin Access</h1>
+              <form onsubmit="event.preventDefault(); window.location.href = '/admin/stats?key=' + document.getElementById('key').value">
+                <label class="block text-sm font-medium text-gray-400 mb-2">Enter API Key</label>
+                <input type="password" id="key" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none mb-6" placeholder="sk-..." required autofocus>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition-colors">
+                  Access Dashboard
+                </button>
+              </form>
+              <div class="mt-4 text-center">
+                <a href="/" class="text-sm text-gray-500 hover:text-gray-300">← Back to App</a>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+        return new Response(loginHtml, { headers: { 'Content-Type': 'text/html' }, status: 200 });
       }
 
-      // Gather last 30 days of data
+      // DATA FETCHING & DASHBOARD RENDER
       const rows = [];
       const today = new Date();
       for (let i = 0; i < 30; i++) {

@@ -8,6 +8,7 @@ import InputForm from './components/InputForm';
 import MarketingReportDisplay from './components/MarketingReportDisplay';
 import HistorySidebar from './components/HistorySidebar';
 import Loader from './components/Loader';
+import Footer from './components/Footer';
 import { HistoryIcon } from './components/IconComponents';
 
 const App: React.FC = () => {
@@ -68,7 +69,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200 font-sans selection:bg-indigo-500 selection:text-white pb-20">
+    <div className="min-h-screen flex flex-col bg-gray-900 text-gray-200 font-sans selection:bg-indigo-500 selection:text-white">
       
       {/* Header */}
       <header className="sticky top-0 z-30 w-full bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
@@ -95,9 +96,9 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 w-full">
         
-        {/* Input Section (Hidden when report is shown? No, let's keep it but collapse or put at top if report exists) */}
+        {/* Input Section */}
         {!report && !isLoading && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-fade-in-up">
                 <div className="text-center space-y-4 max-w-2xl">
@@ -135,7 +136,7 @@ const App: React.FC = () => {
 
         {/* Report Display */}
         {report && !isLoading && (
-            <div className="space-y-8 mt-4">
+            <div className="space-y-8 mt-4 mb-12">
                 <div className="flex justify-between items-center">
                      <button 
                         onClick={() => setReport(null)}
@@ -149,6 +150,9 @@ const App: React.FC = () => {
         )}
 
       </main>
+
+      {/* Footer */}
+      <Footer />
 
       {/* History Sidebar */}
       <HistorySidebar

@@ -17,7 +17,7 @@
   ],
   "routes": [
     {
-      "pattern": "tv.hardie.org",
+      "pattern": "tv-marketer.hardie.org",
       "custom_domain": true
     }
   ]

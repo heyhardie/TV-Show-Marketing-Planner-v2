@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { MarketingReport, ModelType, InputMode } from '../types';
+import { trackEvent } from './analyticsService';
 
 // Helper to retrieve the API Key from various possible sources
 const getApiKey = (): string | undefined => {
@@ -225,6 +226,9 @@ export const generateMarketingStrategy = async (
     // Deduplicate URLs
     data.groundingUrls = Array.from(new Set(groundingUrls));
     data.modelUsed = modelType;
+
+    // Track successful report generation
+    trackEvent('report');
 
     return data;
 

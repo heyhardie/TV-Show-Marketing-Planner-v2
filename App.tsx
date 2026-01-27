@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ModelType, InputMode, MarketingReport, HistoryItem } from './types';
 import * as geminiService from './services/geminiService';
 import * as historyService from './services/historyService';
+import { trackEvent } from './services/analyticsService';
 
 import InputForm from './components/InputForm';
 import MarketingReportDisplay from './components/MarketingReportDisplay';
@@ -15,10 +16,17 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasTrackedView = useRef(false);
 
   // Load history on mount
   useEffect(() => {
     setHistory(historyService.getHistory());
+    
+    // Track Page View (Unique per session load)
+    if (!hasTrackedView.current) {
+        trackEvent('view');
+        hasTrackedView.current = true;
+    }
   }, []);
 
   const handleSubmit = async (input: string, model: ModelType, mode: InputMode) => {

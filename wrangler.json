@@ -9,9 +9,15 @@
   "observability": {
     "enabled": true
   },
+  "kv_namespaces": [
+    {
+      "binding": "ANALYTICS",
+      "id": "d36575a2d4e64f3d91fcaf1cf0066066"
+    }
+  ],
   "routes": [
     {
-      "pattern": "tv-marketer.hardie.org",
+      "pattern": "tv.hardie.org",
       "custom_domain": true
     }
   ]

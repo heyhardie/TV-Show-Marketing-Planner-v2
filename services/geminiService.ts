@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { MarketingReport, ModelType, InputMode } from '../types';
+import { GoogleGenAI, Type, Schema, Chat } from "@google/genai";
+import { MarketingReport, ModelType, InputMode, MediaType } from '../types';
 import { trackEvent } from './analyticsService';
 
 // Helper to retrieve the API Key from various possible sources
@@ -135,7 +135,8 @@ const ensureApiKey = async () => {
 export const generateMarketingStrategy = async (
   input: string,
   modelType: ModelType,
-  mode: InputMode
+  mode: InputMode,
+  mediaType: MediaType
 ): Promise<MarketingReport> => {
   
   // Enforce Paid Key Selection for Advanced Models
@@ -177,16 +178,21 @@ export const generateMarketingStrategy = async (
 
   const thinkingConfig = modelType === 'thinking' ? { thinkingBudget: 32768 } : undefined;
 
-  const systemInstruction = `You are a world-class TV Marketing Executive. 
-  Your task is to generate a comprehensive marketing report for a TV show.
-  ${mode === 'existing' ? 'Verify facts about the show using Google Search.' : 'This is a new concept. Be creative and inventive.'}
+  const entityType = mediaType === 'movie' ? 'Movie' : 'TV Show';
+  const roleType = mediaType === 'movie' ? 'Film Marketing Executive' : 'TV Marketing Executive';
+
+  const systemInstruction = `You are a world-class ${roleType}. 
+  Your task is to generate a comprehensive marketing report for a ${entityType}.
+  ${mode === 'existing' ? `Verify facts about the ${entityType} using Google Search.` : 'This is a new concept. Be creative and inventive.'}
   
   Output MUST be valid JSON matching the schema provided.
+  IMPORTANT: The JSON schema uses "showInfo" and "crossPromotionShows" for compatibility, but if the user asks for a MOVIE, fill these fields with MOVIE relevant data (e.g. cross promotion with other films).
+  
   For 'budgetBreakdown', ensure percentages sum to roughly 100.
   For 'keyArtConcepts', provide 3 distinct visual directions with detailed image generation prompts.
   `;
 
-  const prompt = `Generate a marketing strategy for the following ${mode === 'existing' ? 'existing TV show' : 'new TV show concept'}:
+  const prompt = `Generate a marketing strategy for the following ${mode === 'existing' ? `existing ${entityType}` : `new ${entityType} concept`}:
   "${input}"
   `;
 
@@ -226,6 +232,7 @@ export const generateMarketingStrategy = async (
     // Deduplicate URLs
     data.groundingUrls = Array.from(new Set(groundingUrls));
     data.modelUsed = modelType;
+    data.mediaType = mediaType;
 
     // Track successful report generation
     trackEvent('report');
@@ -286,3 +293,32 @@ export const generateKeyArtImage = async (prompt: string): Promise<string> => {
 
   throw new Error("No image generated.");
 };
+
+export const createChatSession = (report: MarketingReport): Chat => {
+    let ai;
+    try {
+        ai = getAiClient();
+    } catch(e) {
+        throw new Error("API Key is missing.");
+    }
+
+    const entityType = report.mediaType === 'movie' ? 'Movie' : 'TV Show';
+    const roleType = report.mediaType === 'movie' ? 'Film Marketing Executive' : 'TV Marketing Executive';
+
+    const contextInstruction = `You are a world-class ${roleType} who just authored a marketing strategy report for the ${entityType}: "${report.showInfo.title}".
+    
+    Here is the full content of the report you generated in JSON format:
+    ${JSON.stringify(report)}
+
+    The user will ask you questions about your strategy. Answer based on the report data, but feel free to expand with your expertise. 
+    Be professional, creative, and enthusiastic about the project.
+    Keep answers concise unless asked for detail.
+    `;
+
+    return ai.chats.create({
+        model: 'gemini-3-flash-preview',
+        config: {
+            systemInstruction: contextInstruction,
+        }
+    });
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ModelType, InputMode, MarketingReport, HistoryItem } from './types';
+import { ModelType, InputMode, MarketingReport, HistoryItem, MediaType } from './types';
 import * as geminiService from './services/geminiService';
 import * as historyService from './services/historyService';
 import { trackEvent } from './services/analyticsService';
@@ -30,13 +30,13 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSubmit = async (input: string, model: ModelType, mode: InputMode) => {
+  const handleSubmit = async (input: string, model: ModelType, mode: InputMode, mediaType: MediaType) => {
     setIsLoading(true);
     setError(null);
     setReport(null);
     
     try {
-      const result = await geminiService.generateMarketingStrategy(input, model, mode);
+      const result = await geminiService.generateMarketingStrategy(input, model, mode, mediaType);
       setReport(result);
       
       // Save to history
@@ -79,7 +79,7 @@ const App: React.FC = () => {
                 <span className="text-white font-bold text-lg">AI</span>
              </div>
              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-               TV Marketing AI
+               Entertainment Marketing AI
              </h1>
           </div>
           
@@ -106,7 +106,7 @@ const App: React.FC = () => {
                         Next-Gen Marketing Strategies
                     </h2>
                     <p className="text-lg text-gray-400">
-                        Generate comprehensive audience profiles, competitor analysis, and key art concepts for your TV show in seconds using Gemini 3.
+                        Generate comprehensive audience profiles, competitor analysis, and key art concepts for your TV Shows and Movies in seconds using Gemini 3.
                     </p>
                 </div>
                 <InputForm onSubmit={handleSubmit} isLoading={isLoading} />

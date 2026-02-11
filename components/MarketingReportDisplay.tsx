@@ -3,6 +3,7 @@ import { MarketingReport } from '../types';
 import { generateKeyArtImage } from '../services/geminiService';
 import { DownloadIcon, ClipboardIcon } from './IconComponents';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import ChatInterface from './ChatInterface';
 
 interface Props {
   data: MarketingReport;
@@ -49,6 +50,8 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
     alert("Report JSON copied to clipboard!");
   };
 
+  const isMovie = data.mediaType === 'movie';
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 animate-fade-in" id="report-display">
       
@@ -78,6 +81,11 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
                  ))}
                </div>
             </div>
+            {data.mediaType && (
+                <div className="px-3 py-1 rounded border border-gray-600 text-xs text-gray-400 uppercase tracking-widest">
+                    {data.mediaType === 'movie' ? 'Movie' : 'TV Show'}
+                </div>
+            )}
           </div>
           <p className="text-gray-300 text-lg leading-relaxed max-w-4xl">{data.showInfo.summary}</p>
         </div>
@@ -164,7 +172,7 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
                     <p className="text-gray-200 bg-gray-900/50 p-4 rounded-xl">{data.marketingPlan.adBuyImplementation}</p>
                 </div>
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Cross Promotion</h3>
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">{isMovie ? 'Cross Promotion / Tie-ins' : 'Cross Promotion Shows'}</h3>
                     <div className="flex flex-wrap gap-2 bg-gray-900/50 p-4 rounded-xl">
                         {data.marketingPlan.crossPromotionShows.map((show, i) => (
                              <span key={i} className="px-3 py-1 bg-purple-900/30 text-purple-300 rounded-lg border border-purple-800/50 text-sm">{show}</span>
@@ -272,6 +280,11 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
             ))}
         </div>
       </div>
+
+       {/* Chat Section */}
+       <div className="pt-8 border-t border-gray-800 print-break-inside-avoid">
+           <ChatInterface report={data} />
+       </div>
 
       {/* Grounding Sources */}
       {data.groundingUrls && data.groundingUrls.length > 0 && (

@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { ModelType, InputMode } from '../types';
+import { ModelType, InputMode, MediaType } from '../types';
 import { SparklesIcon, BoltIcon, StarIcon, BrainIcon } from './IconComponents';
 
 interface InputFormProps {
-  onSubmit: (input: string, model: ModelType, mode: InputMode) => void;
+  onSubmit: (input: string, model: ModelType, mode: InputMode, mediaType: MediaType) => void;
   isLoading: boolean;
 }
 
 const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   const [model, setModel] = useState<ModelType>('fast');
   const [mode, setMode] = useState<InputMode>('existing');
+  const [mediaType, setMediaType] = useState<MediaType>('tv');
   const [input, setInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    onSubmit(input, model, mode);
+    onSubmit(input, model, mode, mediaType);
   };
 
   // DIAGNOSTIC LOGIC
@@ -48,13 +49,26 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   } else if (runtimeKey === '') {
       statusMessage = "Worker Active, Key Empty";
       statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
-      // THIS IS THE FIX FOR THE USER'S QUESTION
       tip = "The Worker is running, but the API_KEY variable is empty.\n\nIMPORTANT: Go to Cloudflare Dashboard > [Your Project] > Settings > Variables and Secrets.\n(Do NOT use 'Build' variables). Add 'API_KEY' there and Redeploy.";
   } else {
       statusMessage = "Worker Not Active";
       statusColor = "text-orange-400 border-orange-800 bg-orange-900/30";
       tip = "The Worker did not run. 1. Go to Cloudflare > Workers > [App] > Settings > Triggers. 2. Ensure a Route exists (e.g. *your-app.workers.dev/*).";
   }
+
+  const getPlaceholder = () => {
+    if (mode === 'existing') {
+        return mediaType === 'tv' ? "e.g., Stranger Things, Breaking Bad" : "e.g., Inception, The Godfather";
+    }
+    return `Describe your ${mediaType === 'tv' ? 'show' : 'movie'} concept...`;
+  };
+
+  const getLabel = () => {
+    if (mode === 'existing') {
+        return mediaType === 'tv' ? 'TV Show Title' : 'Movie Title';
+    }
+    return mediaType === 'tv' ? 'Show Concept / Summary' : 'Movie Concept / Summary';
+  };
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto space-y-6 bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
@@ -104,32 +118,57 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
         </button>
       </div>
 
-      {/* Input Mode */}
-      <div className="flex space-x-4 bg-gray-900/50 p-1 rounded-lg w-fit mx-auto">
-        <button
-          type="button"
-          onClick={() => setMode('existing')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-            mode === 'existing' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          Existing Show
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('concept')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-            mode === 'concept' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          New Concept
-        </button>
+      {/* Format & Mode Selection */}
+      <div className="flex flex-col sm:flex-row justify-center gap-4">
+          {/* Format (TV vs Movie) */}
+          <div className="flex bg-gray-900/50 p-1 rounded-lg w-fit mx-auto sm:mx-0">
+            <button
+              type="button"
+              onClick={() => setMediaType('tv')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                mediaType === 'tv' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              TV Show
+            </button>
+            <button
+              type="button"
+              onClick={() => setMediaType('movie')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                mediaType === 'movie' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Movie
+            </button>
+          </div>
+
+          {/* Mode (Existing vs Concept) */}
+          <div className="flex bg-gray-900/50 p-1 rounded-lg w-fit mx-auto sm:mx-0">
+            <button
+              type="button"
+              onClick={() => setMode('existing')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                mode === 'existing' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Existing
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('concept')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                mode === 'concept' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Concept
+            </button>
+          </div>
       </div>
 
       {/* Input Field */}
       <div className="space-y-2">
         <label htmlFor="input" className="block text-sm font-medium text-gray-300">
-          {mode === 'existing' ? 'Show Title or URL' : 'Treatment / Summary'}
+          {getLabel()}
         </label>
         {mode === 'existing' ? (
           <input
@@ -137,7 +176,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g., Stranger Things, Breaking Bad"
+            placeholder={getPlaceholder()}
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
           />
         ) : (
@@ -146,7 +185,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={4}
-            placeholder="Describe your show concept..."
+            placeholder={getPlaceholder()}
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
           />
         )}

@@ -1,6 +1,7 @@
 export type ModelType = 'fast' | 'pro' | 'thinking';
 export type InputMode = 'existing' | 'concept';
 export type MediaType = 'tv' | 'movie';
+export type ReportType = 'launch' | 'awards';
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -9,6 +10,7 @@ export interface ChatMessage {
 
 export interface MarketingReport {
   mediaType?: MediaType; // Optional for backward compatibility with old history
+  reportType?: ReportType;
   showInfo: {
     title: string;
     summary: string;
@@ -20,6 +22,10 @@ export interface MarketingReport {
     locations: string[];
     averageIncome: string;
     interests: string[];
+  };
+  awardsStrategy?: {
+    priorityCategories: string[];
+    voterNarrative: string;
   };
   competitorAnalysis: Array<{
     title: string;

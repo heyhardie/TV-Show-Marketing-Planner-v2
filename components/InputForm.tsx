@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ModelType, InputMode, MediaType } from '../types';
+import { ModelType, InputMode, MediaType, ReportType } from '../types';
 import { SparklesIcon, BoltIcon, StarIcon, BrainIcon } from './IconComponents';
 
 interface InputFormProps {
-  onSubmit: (input: string, model: ModelType, mode: InputMode, mediaType: MediaType) => void;
+  onSubmit: (input: string, model: ModelType, mode: InputMode, mediaType: MediaType, reportType: ReportType) => void;
   isLoading: boolean;
 }
 
@@ -11,12 +11,13 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
   const [model, setModel] = useState<ModelType>('fast');
   const [mode, setMode] = useState<InputMode>('existing');
   const [mediaType, setMediaType] = useState<MediaType>('tv');
+  const [reportType, setReportType] = useState<ReportType>('launch');
   const [input, setInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    onSubmit(input, model, mode, mediaType);
+    onSubmit(input, model, mode, mediaType, reportType);
   };
 
   // DIAGNOSTIC LOGIC
@@ -118,14 +119,13 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
         </button>
       </div>
 
-      {/* Format & Mode Selection */}
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-          {/* Format (TV vs Movie) */}
-          <div className="flex bg-gray-900/50 p-1 rounded-lg w-fit mx-auto sm:mx-0">
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Format (TV vs Movie) */}
+        <div className="flex-1 bg-gray-900/50 p-1.5 rounded-xl flex">
             <button
               type="button"
               onClick={() => setMediaType('tv')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                 mediaType === 'tv' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -134,16 +134,40 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
             <button
               type="button"
               onClick={() => setMediaType('movie')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                 mediaType === 'movie' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
             >
               Movie
             </button>
-          </div>
+        </div>
 
-          {/* Mode (Existing vs Concept) */}
-          <div className="flex bg-gray-900/50 p-1 rounded-lg w-fit mx-auto sm:mx-0">
+        {/* Campaign Goal (Launch vs Awards) */}
+        <div className="flex-1 bg-gray-900/50 p-1.5 rounded-xl flex">
+            <button
+              type="button"
+              onClick={() => setReportType('launch')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                reportType === 'launch' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Launch Strategy
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportType('awards')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                reportType === 'awards' ? 'bg-yellow-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Awards / FYC
+            </button>
+        </div>
+      </div>
+
+      {/* Mode (Existing vs Concept) */}
+      <div className="flex justify-center">
+          <div className="flex bg-gray-900/50 p-1 rounded-lg">
             <button
               type="button"
               onClick={() => setMode('existing')}
@@ -151,7 +175,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
                 mode === 'existing' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Existing
+              Existing IP
             </button>
             <button
               type="button"
@@ -160,7 +184,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
                 mode === 'concept' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Concept
+              New Concept
             </button>
           </div>
       </div>
@@ -198,7 +222,9 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
         className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center space-x-2 transition-all ${
           isLoading || !input.trim()
             ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg hover:shadow-indigo-500/25'
+            : reportType === 'awards'
+                ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white shadow-lg'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg'
         }`}
       >
         {isLoading ? (
@@ -206,7 +232,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
         ) : (
           <>
             <SparklesIcon className="w-5 h-5" />
-            <span>Generate Strategy</span>
+            <span>Generate {reportType === 'awards' ? 'FYC Campaign' : 'Strategy'}</span>
           </>
         )}
       </button>

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema, Chat } from "@google/genai";
-import { MarketingReport, ModelType, InputMode, MediaType } from '../types';
+import { MarketingReport, ModelType, InputMode, MediaType, ReportType } from '../types';
 import { trackEvent } from './analyticsService';
 
 // Helper to retrieve the API Key from various possible sources
@@ -54,6 +54,14 @@ const RESPONSE_SCHEMA: Schema = {
         interests: { type: Type.ARRAY, items: { type: Type.STRING } },
       },
       required: ["ageRange", "locations", "averageIncome", "interests"],
+    },
+    awardsStrategy: {
+      type: Type.OBJECT,
+      properties: {
+        priorityCategories: { type: Type.ARRAY, items: { type: Type.STRING } },
+        voterNarrative: { type: Type.STRING }
+      },
+      required: ["priorityCategories", "voterNarrative"]
     },
     competitorAnalysis: {
       type: Type.ARRAY,
@@ -114,7 +122,7 @@ const RESPONSE_SCHEMA: Schema = {
       },
     },
   },
-  required: ["showInfo", "audienceProfile", "competitorAnalysis", "marketingPlan", "keyArtConcepts"],
+  required: ["showInfo", "audienceProfile", "awardsStrategy", "competitorAnalysis", "marketingPlan", "keyArtConcepts"],
 };
 
 // Helper to handle API Key selection flow
@@ -136,7 +144,8 @@ export const generateMarketingStrategy = async (
   input: string,
   modelType: ModelType,
   mode: InputMode,
-  mediaType: MediaType
+  mediaType: MediaType,
+  reportType: ReportType = 'launch'
 ): Promise<MarketingReport> => {
   
   // Enforce Paid Key Selection for Advanced Models
@@ -179,20 +188,45 @@ export const generateMarketingStrategy = async (
   const thinkingConfig = modelType === 'thinking' ? { thinkingBudget: 32768 } : undefined;
 
   const entityType = mediaType === 'movie' ? 'Movie' : 'TV Show';
-  const roleType = mediaType === 'movie' ? 'Film Marketing Executive' : 'TV Marketing Executive';
+  
+  // Dynamic Persona and Task based on Report Type
+  let roleType = mediaType === 'movie' ? 'Film Marketing Executive' : 'TV Marketing Executive';
+  let contextTask = `generate a comprehensive launch marketing report for a ${entityType}.`;
+  let specificInstructions = `
+    Focus on general audience acquisition, ratings/box-office, and cultural buzz.
+    For 'awardsStrategy', leave fields as "N/A" or brief potentials if applicable.
+  `;
+
+  if (reportType === 'awards') {
+    roleType = 'Awards Campaign Strategist';
+    contextTask = `develop a winning FYC (For Your Consideration) Awards Campaign for a ${entityType}.`;
+    specificInstructions = `
+        FOCUS is on winning awards (Oscars, Emmys, Golden Globes, SAG).
+        TARGET AUDIENCE is Academy/Guild voters, not the general public.
+        
+        Fields mapping for Awards Mode:
+        - 'audienceProfile': Profile the VOTERS (e.g. Academy members, older demographics, industry pros).
+        - 'competitorAnalysis': Analyze other AWARD CONTENDERS in the same categories.
+        - 'marketingPlan': Focus on Screening Events, Q&As, Industry Trade Ads (Variety/THR), and Guild targeting.
+        - 'awardsStrategy': Fill this with high detail. List 'priorityCategories' (Best Picture, Best Actor, etc) and the 'voterNarrative' (the emotional hook for voters).
+        - 'keyArtConcepts': Describe FYC "Gold" style posters with pull-quotes and laurel wreaths.
+    `;
+  }
 
   const systemInstruction = `You are a world-class ${roleType}. 
-  Your task is to generate a comprehensive marketing report for a ${entityType}.
+  Your task is to ${contextTask}
   ${mode === 'existing' ? `Verify facts about the ${entityType} using Google Search.` : 'This is a new concept. Be creative and inventive.'}
   
+  ${specificInstructions}
+
   Output MUST be valid JSON matching the schema provided.
-  IMPORTANT: The JSON schema uses "showInfo" and "crossPromotionShows" for compatibility, but if the user asks for a MOVIE, fill these fields with MOVIE relevant data (e.g. cross promotion with other films).
+  IMPORTANT: The JSON schema uses "showInfo" and "crossPromotionShows" for compatibility, but if the user asks for a MOVIE, fill these fields with MOVIE relevant data.
   
   For 'budgetBreakdown', ensure percentages sum to roughly 100.
   For 'keyArtConcepts', provide 3 distinct visual directions with detailed image generation prompts.
   `;
 
-  const prompt = `Generate a marketing strategy for the following ${mode === 'existing' ? `existing ${entityType}` : `new ${entityType} concept`}:
+  const prompt = `Generate a ${reportType === 'awards' ? 'FYC Awards Campaign' : 'Marketing Strategy'} for the following ${mode === 'existing' ? `existing ${entityType}` : `new ${entityType} concept`}:
   "${input}"
   `;
 
@@ -233,6 +267,7 @@ export const generateMarketingStrategy = async (
     data.groundingUrls = Array.from(new Set(groundingUrls));
     data.modelUsed = modelType;
     data.mediaType = mediaType;
+    data.reportType = reportType;
 
     // Track successful report generation
     trackEvent('report');
@@ -303,9 +338,12 @@ export const createChatSession = (report: MarketingReport): Chat => {
     }
 
     const entityType = report.mediaType === 'movie' ? 'Movie' : 'TV Show';
-    const roleType = report.mediaType === 'movie' ? 'Film Marketing Executive' : 'TV Marketing Executive';
+    const reportType = report.reportType || 'launch';
+    
+    let roleType = report.mediaType === 'movie' ? 'Film Marketing Executive' : 'TV Marketing Executive';
+    if (reportType === 'awards') roleType = 'Awards Campaign Strategist';
 
-    const contextInstruction = `You are a world-class ${roleType} who just authored a marketing strategy report for the ${entityType}: "${report.showInfo.title}".
+    const contextInstruction = `You are a world-class ${roleType} who just authored a ${reportType === 'awards' ? 'FYC Awards Campaign' : 'marketing strategy report'} for the ${entityType}: "${report.showInfo.title}".
     
     Here is the full content of the report you generated in JSON format:
     ${JSON.stringify(report)}

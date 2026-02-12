@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ModelType, InputMode, MarketingReport, HistoryItem, MediaType } from './types';
+import { ModelType, InputMode, MarketingReport, HistoryItem, MediaType, ReportType } from './types';
 import * as geminiService from './services/geminiService';
 import * as historyService from './services/historyService';
 import { trackEvent } from './services/analyticsService';
@@ -30,13 +30,13 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSubmit = async (input: string, model: ModelType, mode: InputMode, mediaType: MediaType) => {
+  const handleSubmit = async (input: string, model: ModelType, mode: InputMode, mediaType: MediaType, reportType: ReportType) => {
     setIsLoading(true);
     setError(null);
     setReport(null);
     
     try {
-      const result = await geminiService.generateMarketingStrategy(input, model, mode, mediaType);
+      const result = await geminiService.generateMarketingStrategy(input, model, mode, mediaType, reportType);
       setReport(result);
       
       // Save to history

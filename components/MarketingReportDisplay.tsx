@@ -51,6 +51,14 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
   };
 
   const isMovie = data.mediaType === 'movie';
+  const isAwards = data.reportType === 'awards';
+
+  // --- Header Helpers based on Mode ---
+  const audienceTitle = isAwards ? "Voter Profile (Academy/Guilds)" : "Audience Profile";
+  const competitorTitle = isAwards ? "Award Contenders" : "Competitor Analysis";
+  const marketingTitle = isAwards ? "FYC Campaign Strategy" : "Marketing Strategy";
+  const eventsTitle = isAwards ? "Screenings & Industry Events" : "Stunts & Events";
+  const keyArtTitle = isAwards ? "FYC Key Art Concepts" : "Key Art Concepts";
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 animate-fade-in" id="report-display">
@@ -66,37 +74,69 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
       </div>
 
       {/* Header / Show Info */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+      <div className={`bg-gradient-to-br ${isAwards ? 'from-yellow-900/40 to-gray-900' : 'from-gray-800 to-gray-900'} rounded-2xl p-8 border ${isAwards ? 'border-yellow-600/30' : 'border-gray-700'} shadow-xl relative overflow-hidden`}>
+        <div className={`absolute top-0 right-0 w-64 h-64 ${isAwards ? 'bg-yellow-500/10' : 'bg-indigo-600/10'} rounded-full blur-3xl -translate-y-1/2 translate-x-1/2`}></div>
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
             <div>
-               <h1 className="text-4xl font-bold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+               {isAwards && <span className="text-yellow-500 font-bold tracking-widest uppercase text-xs mb-2 block">For Your Consideration</span>}
+               <h1 className="text-4xl font-bold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                  {data.showInfo.title}
                </h1>
                <div className="flex flex-wrap gap-2 text-sm">
                  <span className="px-3 py-1 rounded-full bg-gray-700 text-gray-300 border border-gray-600">{data.showInfo.genre}</span>
                  {data.showInfo.stars.map((star, i) => (
-                    <span key={i} className="px-3 py-1 rounded-full bg-indigo-900/30 text-indigo-300 border border-indigo-800/50">{star}</span>
+                    <span key={i} className={`px-3 py-1 rounded-full border ${isAwards ? 'bg-yellow-900/20 text-yellow-300 border-yellow-800/30' : 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50'}`}>{star}</span>
                  ))}
                </div>
             </div>
-            {data.mediaType && (
-                <div className="px-3 py-1 rounded border border-gray-600 text-xs text-gray-400 uppercase tracking-widest">
-                    {data.mediaType === 'movie' ? 'Movie' : 'TV Show'}
-                </div>
-            )}
+            <div className="flex flex-col items-end space-y-2">
+                {data.mediaType && (
+                    <div className="px-3 py-1 rounded border border-gray-600 text-xs text-gray-400 uppercase tracking-widest">
+                        {data.mediaType === 'movie' ? 'Movie' : 'TV Show'}
+                    </div>
+                )}
+            </div>
           </div>
           <p className="text-gray-300 text-lg leading-relaxed max-w-4xl">{data.showInfo.summary}</p>
         </div>
       </div>
 
+      {/* Awards Strategy Section (Only in Awards Mode) */}
+      {isAwards && data.awardsStrategy && (
+          <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 border border-yellow-600/30 shadow-lg print-break-inside-avoid">
+             <div className="flex items-center mb-6">
+                <span className="w-1 h-8 bg-yellow-500 rounded-full mr-4"></span>
+                <h2 className="text-2xl font-bold text-white">Awards Strategy Focus</h2>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div>
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Priority Categories</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {data.awardsStrategy.priorityCategories.map((cat, i) => (
+                             <div key={i} className="px-4 py-2 bg-yellow-900/20 text-yellow-200 border border-yellow-700/50 rounded-lg text-sm font-medium">
+                                {cat}
+                             </div>
+                        ))}
+                    </div>
+                 </div>
+                 <div>
+                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Voter Narrative</h3>
+                     <p className="text-gray-200 bg-gray-800/50 p-4 rounded-xl border border-gray-700 italic">
+                        "{data.awardsStrategy.voterNarrative}"
+                     </p>
+                 </div>
+             </div>
+          </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Audience Profile */}
+        {/* Audience/Voter Profile */}
         <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-lg print-break-inside-avoid">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                <span className="w-1 h-6 bg-purple-500 rounded-full mr-3"></span>
-                Audience Profile
+                <span className={`w-1 h-6 ${isAwards ? 'bg-yellow-500' : 'bg-purple-500'} rounded-full mr-3`}></span>
+                {audienceTitle}
             </h2>
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -118,10 +158,10 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
                      </div>
                 </div>
                 <div className="bg-gray-900/50 p-4 rounded-xl">
-                     <span className="text-gray-400 text-sm block mb-2">Interests</span>
+                     <span className="text-gray-400 text-sm block mb-2">Interests / Guilds</span>
                      <div className="flex flex-wrap gap-2">
                         {data.audienceProfile.interests.map((int, i) => (
-                            <span key={i} className="text-sm text-indigo-200 bg-indigo-900/30 border border-indigo-800/30 px-2 py-1 rounded">{int}</span>
+                            <span key={i} className={`text-sm px-2 py-1 rounded ${isAwards ? 'text-yellow-200 bg-yellow-900/20 border border-yellow-800/30' : 'text-indigo-200 bg-indigo-900/30 border border-indigo-800/30'}`}>{int}</span>
                         ))}
                      </div>
                 </div>
@@ -132,7 +172,7 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
         <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-lg print-break-inside-avoid">
              <h2 className="text-xl font-bold text-white mb-4 flex items-center">
                 <span className="w-1 h-6 bg-red-500 rounded-full mr-3"></span>
-                Competitor Analysis
+                {competitorTitle}
             </h2>
             <div className="space-y-4">
                 {data.competitorAnalysis.map((comp, i) => (
@@ -151,8 +191,8 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
       {/* Marketing Plan */}
       <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-lg print-break-inside-avoid">
          <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-            <span className="w-1 h-6 bg-indigo-500 rounded-full mr-3"></span>
-            Marketing Strategy
+            <span className={`w-1 h-6 ${isAwards ? 'bg-yellow-500' : 'bg-indigo-500'} rounded-full mr-3`}></span>
+            {marketingTitle}
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -225,12 +265,12 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
              
              {/* Events */}
              <div>
-                 <h3 className="text-lg font-bold text-white mb-4">Stunts & Events</h3>
+                 <h3 className="text-lg font-bold text-white mb-4">{eventsTitle}</h3>
                  <div className="space-y-4">
                      {data.marketingPlan.marketingEvents.map((event, i) => (
                          <div key={i} className="bg-gradient-to-r from-gray-900 to-gray-800 p-4 rounded-xl border border-gray-700">
                              <div className="flex justify-between mb-1">
-                                 <h4 className="font-bold text-indigo-300">{event.title}</h4>
+                                 <h4 className={`font-bold ${isAwards ? 'text-yellow-300' : 'text-indigo-300'}`}>{event.title}</h4>
                                  <span className="text-xs text-gray-500 uppercase">{event.category}</span>
                              </div>
                              <p className="text-sm text-gray-300">{event.description}</p>
@@ -244,8 +284,8 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
       {/* Key Art Concepts */}
       <div className="space-y-6 print-break-inside-avoid">
         <h2 className="text-2xl font-bold text-white flex items-center">
-             <span className="w-1 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></span>
-             Key Art Concepts
+             <span className={`w-1 h-8 bg-gradient-to-b ${isAwards ? 'from-yellow-500 to-orange-500' : 'from-purple-500 to-pink-500'} rounded-full mr-4`}></span>
+             {keyArtTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {data.keyArtConcepts.map((concept, i) => (
@@ -261,7 +301,7 @@ const MarketingReportDisplay: React.FC<Props> = ({ data }) => {
                                 <button 
                                     onClick={() => handleGenerateImage(i, concept.prompt)}
                                     disabled={generatingImageFor === i}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                    className={`px-4 py-2 ${isAwards ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-indigo-600 hover:bg-indigo-500'} disabled:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors`}
                                 >
                                     {generatingImageFor === i ? 'Painting...' : 'Generate Art'}
                                 </button>
